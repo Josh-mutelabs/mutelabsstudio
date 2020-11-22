@@ -1,0 +1,20 @@
+{
+  "dev": {
+    "awscloudformation": {
+      "AuthRoleName": "amplify-mutelabsstudio-dev-232049-authRole",
+      "UnauthRoleArn": "arn:aws:iam::855113634308:role/amplify-mutelabsstudio-dev-232049-unauthRole",
+      "AuthRoleArn": "arn:aws:iam::855113634308:role/amplify-mutelabsstudio-dev-232049-authRole",
+      "Region": "us-east-2",
+      "DeploymentBucketName": "amplify-mutelabsstudio-dev-232049-deployment",
+      "UnauthRoleName": "amplify-mutelabsstudio-dev-232049-unauthRole",
+      "StackName": "amplify-mutelabsstudio-dev-232049",
+      "StackId": "arn:aws:cloudformation:us-east-2:855113634308:stack/amplify-mutelabsstudio-dev-232049/2a7abce0-2cbd-11eb-b061-0266b8599e3a",
+      "AmplifyAppId": "d1zsq5u6x9m4m1"
+    },
+    "categories": {
+      "auth": {
+        "mutelabsstudio35cf79f2": {}
+      }
+    }
+  }
+}

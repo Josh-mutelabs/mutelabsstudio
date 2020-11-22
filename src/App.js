@@ -1,4 +1,5 @@
 import logo from './logo.svg';
+import { withAuthenticator, AmplifySignOut } from '@aws-amplify/ui-react'
 import './App.css';
 
 function App() {
@@ -10,8 +11,9 @@ function App() {
           mutelabs.io
         </p>
       </header>
+      <AmplifySignOut />
     </div>
   );
 }
 
-export default App;
+export default withAuthenticator(App);

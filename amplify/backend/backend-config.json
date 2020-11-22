@@ -1,0 +1,10 @@
+{
+  "auth": {
+    "mutelabsstudio35cf79f2": {
+      "service": "Cognito",
+      "providerPlugin": "awscloudformation",
+      "dependsOn": [],
+      "customAuth": false
+    }
+  }
+}
