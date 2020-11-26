@@ -1,93 +1,101 @@
-import React, { useState, useEffect } from 'react';
-import './App.css';
-import { API, Storage } from 'aws-amplify';
-import { withAuthenticator, AmplifySignOut } from '@aws-amplify/ui-react';
-import { listNotes } from './graphql/queries';
-import { createNote as createNoteMutation, deleteNote as deleteNoteMutation } from './graphql/mutations';
+import React, {useState, useEffect } from 'react';
+import {Auth, Hub } from 'aws-amplify';
 
-const initialFormState = { name: '', description: '' }
-
-function App() {
-  const [notes, setNotes] = useState([]);
-  const [formData, setFormData] = useState(initialFormState);
-
-  async function onChange(e) {
-    if (!e.target.files[0]) return
-    const file = e.target.files[0];
-    setFormData({ ...formData, image: file.name });
-    await Storage.put(file.name, file);
-    fetchNotes();
-  }
-
-  useEffect(() => {
-    fetchNotes();
-  }, []);
-
-  async function fetchNotes() {
-    const apiData = await API.graphql({ query: listNotes });
-    const notesFromAPI = apiData.data.listNotes.items;
-    await Promise.all(notesFromAPI.map(async note => {
-      if (note.image) {
-        const image = await Storage.get(note.image);
-        note.image = image;
-      }
-      return note;
-    }))
-    setNotes(apiData.data.listNotes.items);
-  }
-
-  async function createNote() {
-    if (!formData.name || !formData.description) return;
-    await API.graphql({ query: createNoteMutation, variables: { input: formData } });
-    if (formData.image) {
-      const image = await Storage.get(formData.image);
-      formData.image = image;
-    }
-    setNotes([ ...notes, formData ]);
-    setFormData(initialFormState);
-  }
-
-  async function deleteNote({ id }) {
-    const newNotesArray = notes.filter(note => note.id !== id);
-    setNotes(newNotesArray);
-    await API.graphql({ query: deleteNoteMutation, variables: { input: { id } }});
-  }
-
-  return (
-    <div className="App">
-      <h1>My Notes App</h1>
-      <input
-        onChange={e => setFormData({ ...formData, 'name': e.target.value})}
-        placeholder="Note name"
-        value={formData.name}
-      />
-      <input
-        onChange={e => setFormData({ ...formData, 'description': e.target.value})}
-        placeholder="Note description"
-        value={formData.description}
-      />
-      <input
-  type="file"
-  onChange={onChange}
-/>
-      <button onClick={createNote}>Create Note</button>
-      <div style={{marginBottom: 30}}>
-      {
-  notes.map(note => (
-    <div key={note.id || note.name}>
-      <h2>{note.name}</h2>
-      <p>{note.description}</p>
-      <button onClick={() => deleteNote(note)}>Delete note</button>
-      {
-        note.image && <img src={note.image} style={{width: 400}} />
-      }
-    </div>
-  ))
+const initalFormState = {
+   username:'', password:'', email:'', authCode:'', formType:'signUp' 
 }
-      </div>
-      <AmplifySignOut />
+
+
+function App()  {
+   const [formState, updateFormState] = useState(initalFormState)
+   const [user, updateUser] = useState(null)
+   useEffect(()=>{
+    checkUser()
+    setAuthListener()
+   }, [])
+   async function setAuthListener(){
+    Hub.listen('auth', (data) => {
+      switch (data.payload.event) {
+        case 'signOut':
+          console.log('data from event: ', data)
+          updateFormState(()=>({ ...formState, formType:'signIn'}))
+            break;
+        default:
+          break
+      }
+    });
+   }
+   async function checkUser(){
+     try{
+      const user = await Auth.currentAuthenticatedUser()
+      console.log('user:', user);
+      updateUser(user)
+      updateFormState(()=>({ ...formState, formType:'signedIn'}))
+     } catch (err){
+        //updateUser(null)
+     }
+   }
+   function onChange(e){
+     e.persist()
+     updateFormState(()=>({ ...formState, [e.target.name]:e.target.value}))
+   }
+   const {formType} = formState
+   async function signUp(){
+     const { username,email, password} = formState
+     await Auth.signUp({username, password, attributes:{email}})
+     updateFormState(()=>({ ...formState, formType:'confirmSignUp'}))
+   }
+   async function ConfirmSignUp(){
+    const { email, authCode} = formState
+    await Auth.confirmSignUp(email, authCode)
+    updateFormState(()=>({ ...formState, formType:'signIn'}))
+   }
+   async function signIn(){
+    const { username, password} = formState
+    await Auth.signIn(username, password)
+    updateFormState(()=>({ ...formState, formType:'signedIn'}))
+   }
+  return (
+    <div className='App'>
+          {
+            formType === 'signUp' && (
+              <div>
+                <input name='username' onChange={onChange} placeholder='Email' />
+                <input name='email' onChange={onChange} placeholder='confirm Email' />
+                <input name='password' type='password' onChange={onChange} placeholder='Password' />
+                <button onClick={signUp}>Sign Up</button>
+                <button onClick={()=>updateFormState(()=>({
+                  ...formState, formType: "signIn"
+                }))}>Sign In</button>
+                </div>
+            )
+          }
+          {
+            formType === 'signIn' && (
+              <div>
+                <input name='username' onChange={onChange} placeholder='email' />
+                <input name='password' type='password' onChange={onChange} placeholder='Password' />
+                <button onClick={signIn}>Sign In</button>
+                </div>
+            )
+          }
+          {
+            formType === 'confirmSignUp' && (
+              <div>
+                <input name='authCode' onChange={onChange} placeholder='Confirmation Code' />
+                <button onClick={ConfirmSignUp}>Confirm Sign Up</button>
+                </div>
+            )
+          }
+           {
+            formType === 'signedIn' && (
+              <div>
+                <h1>Hello MuteLabs.io</h1>
+                <button onClick={()=>{Auth.signOut()}}>Sign Out</button>
+                </div>
+            )
+          }
     </div>
   );
-}
-
-export default withAuthenticator(App);
+};
+export default App;
