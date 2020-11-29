@@ -1,18 +1,23 @@
 import React, {useState, useEffect } from 'react';
 import {Auth, Hub } from 'aws-amplify';
+import { userContext } from './utils/userContext';
+import { WorkSpace } from './Components/WorkSpace';
+
 
 const initalFormState = {
-   username:'', password:'', email:'', authCode:'', formType:'signUp' 
+   username:'', password:'', email:'', authCode:'', formType:'signUp', given_name:'', 
 }
-
 
 function App()  {
    const [formState, updateFormState] = useState(initalFormState)
    const [user, updateUser] = useState(null)
+   const {formType} = formState
+
    useEffect(()=>{
     checkUser()
     setAuthListener()
    }, [])
+
    async function setAuthListener(){
     Hub.listen('auth', (data) => {
       switch (data.payload.event) {
@@ -39,10 +44,9 @@ function App()  {
      e.persist()
      updateFormState(()=>({ ...formState, [e.target.name]:e.target.value}))
    }
-   const {formType} = formState
    async function signUp(){
      const { username,email, password} = formState
-     await Auth.signUp({username, password, attributes:{email}})
+     await Auth.signUp({username, password, attributes:{email, given_name:"Josh"}})
      updateFormState(()=>({ ...formState, formType:'confirmSignUp'}))
    }
    async function ConfirmSignUp(){
@@ -57,6 +61,7 @@ function App()  {
    }
   return (
     <div className='App'>
+      <userContext.Provider value="Hello from context">
           {
             formType === 'signUp' && (
               <div>
@@ -90,11 +95,11 @@ function App()  {
            {
             formType === 'signedIn' && (
               <div>
-                <h1>Hello MuteLabs.io</h1>
-                <button onClick={()=>{Auth.signOut()}}>Sign Out</button>
+                <WorkSpace/>
                 </div>
             )
           }
+          </userContext.Provider>
     </div>
   );
 };
