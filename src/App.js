@@ -2,6 +2,12 @@ import React, {useState, useEffect } from 'react';
 import {Auth, Hub } from 'aws-amplify';
 import { userContext } from './utils/userContext';
 import { WorkSpace } from './Components/WorkSpace';
+import {Navbar} from './Components/Nav/Navbar';
+import {NavItem} from './Components/Nav/NavItem';
+import DropdownMenu from './Components/Nav/DropdownMenu.js';
+import {ReactComponent as BellIcon} from './icons/bell.svg'
+import {ReactComponent as SettingsIcon} from './icons/settings.svg'
+import {ReactComponent as MessageIcon} from './icons/message-circle.svg'
 
 
 const initalFormState = {
@@ -94,7 +100,15 @@ function App()  {
           }
            {
             formType === 'signedIn' && (
-              <div>
+              <div className="globalContainer">
+                <Navbar>
+            <span className="currentUser" >{user.attributes.given_name}</span>
+                  <NavItem icon={<MessageIcon/>}/>
+                  <NavItem icon={<BellIcon/>}/>
+                  <NavItem icon={<SettingsIcon/>}>
+                    <DropdownMenu/>
+                  </NavItem>
+                </Navbar>
                 <WorkSpace/>
                 </div>
             )
